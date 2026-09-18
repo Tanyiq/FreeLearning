@@ -36,6 +36,8 @@ npm run package:portable
 
 Windows 上也可以直接双击仓库根目录的 `BUILD-PORTABLE.cmd`。脚本会检查 Node.js；系统有 pnpm 时直接使用，没有时通过 `npx` 临时运行 pnpm，无需全局安装。随后脚本会安装依赖、执行生产编译，并在完成后打开 `release` 目录。首次打包需要联网下载依赖。
 
+如果 `node_modules` 中的 Electron、node-pty 和构建工具已经完整，脚本会跳过依赖安装，因此日常重新打包无需联网。需要强制刷新依赖时，可在命令行先执行 `set FORCE_INSTALL=1`，再运行 `BUILD-PORTABLE.cmd`。
+
 产物位于 `release/Domain-Agent-Workbench-<version>-x64.exe`，可复制到任意位置启动。
 
 如需传统安装包：

@@ -29,13 +29,25 @@ if errorlevel 1 (
 set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
 set "ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/"
 
-echo [3/4] Installing dependencies...
-if defined USE_NPX_PNPM (
-  call npx --yes pnpm@11 install
+set "DEPS_READY=1"
+if not exist "node_modules\electron\dist\electron.exe" set "DEPS_READY="
+if not exist "node_modules\node-pty\prebuilds\win32-x64\pty.node" set "DEPS_READY="
+if not exist "node_modules\electron-builder\out\cli\cli.js" set "DEPS_READY="
+if not exist "node_modules\typescript\bin\tsc" set "DEPS_READY="
+if defined FORCE_INSTALL set "DEPS_READY="
+
+if defined DEPS_READY (
+  echo [3/4] Dependencies are ready. Skipping network install.
 ) else (
-  call pnpm install
+  echo [3/4] Installing missing dependencies...
+  if exist "node_modules\electron\dist\electron.exe" set "ELECTRON_SKIP_BINARY_DOWNLOAD=1"
+  if defined USE_NPX_PNPM (
+    call npx --yes pnpm@11 install
+  ) else (
+    call pnpm install
+  )
+  if errorlevel 1 goto :failed
 )
-if errorlevel 1 goto :failed
 
 echo [4/4] Building portable EXE...
 if defined USE_NPX_PNPM (
