@@ -22,20 +22,27 @@ if errorlevel 1 (
 echo [2/4] Checking pnpm...
 where pnpm >nul 2>nul
 if errorlevel 1 (
-  echo Installing pnpm for the current Windows user...
-  call npm install -g pnpm@11
-  if errorlevel 1 goto :failed
+  echo pnpm is not on PATH. It will be run temporarily through npx.
+  set "USE_NPX_PNPM=1"
 )
 
 set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
 set "ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/"
 
 echo [3/4] Installing dependencies...
-call pnpm install
+if defined USE_NPX_PNPM (
+  call npx --yes pnpm@11 install
+) else (
+  call pnpm install
+)
 if errorlevel 1 goto :failed
 
 echo [4/4] Building portable EXE...
-call pnpm run package:portable
+if defined USE_NPX_PNPM (
+  call npx --yes pnpm@11 run package:portable
+) else (
+  call pnpm run package:portable
+)
 if errorlevel 1 goto :failed
 
 echo.
