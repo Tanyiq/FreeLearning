@@ -26,9 +26,6 @@ if errorlevel 1 (
   set "USE_NPX_PNPM=1"
 )
 
-set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
-set "ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/"
-
 set "DEPS_READY=1"
 if not exist "node_modules\electron\dist\electron.exe" set "DEPS_READY="
 if not exist "node_modules\node-pty\prebuilds\win32-x64\pty.node" set "DEPS_READY="
@@ -39,29 +36,59 @@ if defined FORCE_INSTALL set "DEPS_READY="
 if defined DEPS_READY (
   echo [3/4] Dependencies are ready. Skipping network install.
 ) else (
-  echo [3/4] Installing missing dependencies...
+  echo [3/4] Installing missing dependencies from the official source...
+  set "ELECTRON_MIRROR="
+  set "ELECTRON_BUILDER_BINARIES_MIRROR="
   if exist "node_modules\electron\dist\electron.exe" set "ELECTRON_SKIP_BINARY_DOWNLOAD=1"
   if defined USE_NPX_PNPM (
     call npx --yes pnpm@11 install
   ) else (
     call pnpm install
   )
-  if errorlevel 1 goto :failed
+  if errorlevel 1 (
+    echo.
+    echo Official download failed. Retrying with the Electron China mirror...
+    set "ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/"
+    if defined USE_NPX_PNPM (
+      call npx --yes pnpm@11 install
+    ) else (
+      call pnpm install
+    )
+    if errorlevel 1 goto :download_failed
+  )
 )
 
 echo [4/4] Building portable EXE...
+set "ELECTRON_BUILDER_BINARIES_MIRROR="
 if defined USE_NPX_PNPM (
   call npx --yes pnpm@11 run package:portable
 ) else (
   call pnpm run package:portable
 )
-if errorlevel 1 goto :failed
+if errorlevel 1 (
+  echo.
+  echo Official builder download failed. Retrying with the China mirror...
+  set "ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/"
+  if defined USE_NPX_PNPM (
+    call npx --yes pnpm@11 run package:portable
+  ) else (
+    call pnpm run package:portable
+  )
+  if errorlevel 1 goto :download_failed
+)
 
 echo.
 echo Build completed successfully.
 echo Output: %~dp0release\Domain-Agent-Workbench-[version]-x64.exe
 start "" "%~dp0release"
 exit /b 0
+
+:download_failed
+echo.
+echo Both the official download and the fallback mirror failed.
+echo You can build on GitHub instead: Actions - Build Windows Portable EXE - Run workflow.
+pause
+exit /b 1
 
 :failed
 echo.

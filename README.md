@@ -38,6 +38,15 @@ Windows 上也可以直接双击仓库根目录的 `BUILD-PORTABLE.cmd`。脚本
 
 如果 `node_modules` 中的 Electron、node-pty 和构建工具已经完整，脚本会跳过依赖安装，因此日常重新打包无需联网。需要强制刷新依赖时，可在命令行先执行 `set FORCE_INSTALL=1`，再运行 `BUILD-PORTABLE.cmd`。
 
+脚本在干净电脑上先使用 Electron 官方 GitHub 下载源，失败后才尝试国内镜像。如果两个下载源均不可达，建议使用仓库自带的 GitHub Actions 工作流：进入仓库 `Actions` → `Build Windows Portable EXE` → `Run workflow`，完成后在该次运行的 `Artifacts` 区域下载 EXE。
+
+推送 `v*` 标签（例如 `v1.0.0`）也会触发构建，并自动创建带有便携版 EXE 的 GitHub Release：
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
+
 产物位于 `release/Domain-Agent-Workbench-<version>-x64.exe`，可复制到任意位置启动。
 
 如需传统安装包：
