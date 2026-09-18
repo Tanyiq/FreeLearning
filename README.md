@@ -68,6 +68,8 @@ Workbench 顶部支持添加、切换和移除多个 Domain Project。注册信�
 - `*-review` → REVIEW
 - `*-knowledge-refresh` → REFRESH
 
+界面会显示扫描到的全部 Skill，而不是固定显示四种模式。以上后缀只用于应用对应的 Session 策略；其他名称的 Skill 作为自定义 Skill 显示，并使用独立 Session。
+
 CodeAgent 始终以 Project 根目录作为 `cwd`，并仅通过 `D:\\codeagentCli\\codeagent.bat` 启动。
 
 启动 Session 后，Workbench 通过 `/<skill-name>` 形式激活 Skill，例如 `/topo-qa`；不会将 `SKILL.md` 内容拼接到 Prompt。
@@ -76,6 +78,6 @@ CodeAgent 始终以 Project 根目录作为 `cwd`，并仅通过 `D:\\codeagentC
 
 - QA：同一 Project 下复用运行中的 QA Session。
 - DEV：每次启动新 Session。
-- REVIEW：每次启动新的独立 Session，并发送原始需求与目标 commit。
+- REVIEW：每次启动新的独立 Session；后续需求和 commit 等信息由用户直接在 CodeAgent 终端中交互输入。
 - REFRESH：每次启动新 Session。
 # FreeLearning

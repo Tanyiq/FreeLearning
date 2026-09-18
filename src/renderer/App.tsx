@@ -1,20 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { GitStatus, ProjectInfo, RegisteredProject, RuntimeStatus, SessionSummary, WorkMode } from '../shared/types'
-import { WORK_MODES } from '../shared/types'
-import { ReviewDialog } from './ReviewDialog'
 import { useTerminal } from './use-terminal'
 
 const MODE_DESCRIPTIONS: Record<WorkMode, string> = {
   QA: '问答与领域检索',
   DEV: '独立开发任务',
   REVIEW: '独立提交审查',
-  REFRESH: '知识刷新任务'
+  REFRESH: '知识刷新任务',
+  CUSTOM: '自定义 Skill · 独立 Session'
 }
 
 export default function App() {
   const [project, setProject] = useState<ProjectInfo | null>(null)
   const [registeredProjects, setRegisteredProjects] = useState<RegisteredProject[]>([])
-  const [mode, setMode] = useState<WorkMode>('QA')
+  const [selectedSkillName, setSelectedSkillName] = useState<string | null>(null)
   const [runtime, setRuntime] = useState<RuntimeStatus | null>(null)
   const [git, setGit] = useState<GitStatus | null>(null)
   const [sessions, setSessions] = useState<SessionSummary[]>([])
@@ -23,12 +22,12 @@ export default function App() {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
-  const [showReview, setShowReview] = useState(false)
   const [showProjects, setShowProjects] = useState(false)
   const [showRuntime, setShowRuntime] = useState(false)
   const { containerRef } = useTerminal({ sessionId: activeSession?.id ?? null, history: terminalHistory })
 
-  const selectedSkill = project?.modeSkills[mode]
+  const selectedSkill = project?.skills.find((skill) => skill.name === selectedSkillName)
+  const selectedMode: WorkMode = selectedSkill?.mode ?? 'CUSTOM'
   const activeRunning = activeSession?.state === 'running'
 
   const refreshSessions = useCallback(async (root: string) => {
@@ -40,8 +39,7 @@ export default function App() {
     setActiveSession(null)
     setTerminalHistory('')
     setError(next.warnings[0] ?? null)
-    const firstMode = WORK_MODES.find((candidate) => next.modeSkills[candidate])
-    if (firstMode) setMode(firstMode)
+    setSelectedSkillName(next.skills[0]?.name ?? null)
     setGit(await window.workbench.getGitStatus(next.root))
     await refreshSessions(next.root)
   }, [refreshSessions])
@@ -144,15 +142,14 @@ export default function App() {
     }
   }
 
-  const start = async (review?: { requirement: string; commitId: string }): Promise<void> => {
+  const start = async (): Promise<void> => {
     if (!project || !selectedSkill) return
     setBusy(true)
     setError(null)
     try {
-      const result = await window.workbench.startSession({ projectRoot: project.root, mode, skill: selectedSkill, review })
+      const result = await window.workbench.startSession({ projectRoot: project.root, mode: selectedMode, skill: selectedSkill })
       setActiveSession(result.session)
       setTerminalHistory(result.history)
-      setShowReview(false)
       await refreshSessions(project.root)
     } catch (reason) {
       setError(errorMessage(reason))
@@ -162,8 +159,7 @@ export default function App() {
   }
 
   const handleStart = (): void => {
-    if (mode === 'REVIEW') setShowReview(true)
-    else void start()
+    void start()
   }
 
   const stop = async (): Promise<void> => {
@@ -175,7 +171,7 @@ export default function App() {
 
   const switchSession = async (session: SessionSummary): Promise<void> => {
     const history = await window.workbench.getSessionHistory(session.id)
-    setMode(session.mode)
+    setSelectedSkillName(session.skill.name)
     setActiveSession(session)
     setTerminalHistory(history)
   }
@@ -193,7 +189,7 @@ export default function App() {
 
   const sessionLabel = useMemo(() => {
     if (!activeSession) return 'NO SESSION'
-    return `${activeSession.mode} / ${activeSession.state.toUpperCase()}`
+    return `${activeSession.skill.name} / ${activeSession.state.toUpperCase()}`
   }, [activeSession])
 
   return (
@@ -233,19 +229,19 @@ export default function App() {
 
       <section className="workspace">
         <aside className="sidebar">
-          <div className="section-label">WORKFLOW</div>
-          <nav className="mode-list" aria-label="工作模式">
-            {WORK_MODES.map((item) => {
-              const skill = project?.modeSkills[item]
+          <div className="section-label">PROJECT SKILLS</div>
+          <nav className="mode-list" aria-label="Project Skills">
+            {!project?.skills.length && <p className="empty-copy">当前 Project 未发现 Skill</p>}
+            {project?.skills.map((skill) => {
+              const skillMode: WorkMode = skill.mode ?? 'CUSTOM'
               return (
                 <button
-                  key={item}
-                  className={`mode-item ${mode === item ? 'active' : ''}`}
-                  disabled={!skill}
-                  onClick={() => setMode(item)}
+                  key={skill.name}
+                  className={`mode-item ${selectedSkillName === skill.name ? 'active' : ''}`}
+                  onClick={() => setSelectedSkillName(skill.name)}
                 >
-                  <span className="mode-icon">{item.slice(0, 1)}</span>
-                  <span><strong>{item}</strong><small>{skill ? MODE_DESCRIPTIONS[item] : '未发现 Skill'}</small></span>
+                  <span className="mode-icon">/</span>
+                  <span><strong>{skill.name}</strong><small>{skill.mode ? `${skill.mode} · ${MODE_DESCRIPTIONS[skillMode]}` : MODE_DESCRIPTIONS.CUSTOM}</small></span>
                 </button>
               )
             })}
@@ -273,7 +269,7 @@ export default function App() {
             <div className="session-controls">
               {activeRunning && <button className="button danger" onClick={() => void stop()}>Stop Session</button>}
               <button className="button primary" disabled={!project || !selectedSkill || busy || !runtime?.ready} onClick={handleStart}>
-                {busy ? 'Starting…' : mode === 'REVIEW' ? 'Start Review' : mode === 'QA' ? 'Start / Reuse QA' : `Start ${mode}`}
+                {busy ? 'Starting…' : !selectedSkill ? 'Select Skill' : selectedMode === 'QA' ? `Start / Reuse /${selectedSkill.name}` : `Start /${selectedSkill.name}`}
               </button>
             </div>
           </div>
@@ -323,7 +319,6 @@ export default function App() {
         </section>
       </section>
 
-      {showReview && <ReviewDialog onCancel={() => setShowReview(false)} onStart={(requirement, commitId) => void start({ requirement, commitId })} />}
       {showProjects && (
         <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && setShowProjects(false)}>
           <section className="dialog project-dialog" role="dialog" aria-modal="true" aria-labelledby="projects-title">

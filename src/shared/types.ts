@@ -1,4 +1,4 @@
-export const WORK_MODES = ['QA', 'DEV', 'REVIEW', 'REFRESH'] as const
+export const WORK_MODES = ['QA', 'DEV', 'REVIEW', 'REFRESH', 'CUSTOM'] as const
 
 export type WorkMode = (typeof WORK_MODES)[number]
 
@@ -59,10 +59,6 @@ export interface StartSessionRequest {
   projectRoot: string
   mode: WorkMode
   skill: SkillInfo
-  review?: {
-    requirement: string
-    commitId: string
-  }
 }
 
 export interface StartSessionResult {

@@ -27,11 +27,7 @@ export class SessionManager extends EventEmitter {
   start(request: StartSessionRequest, codeAgentBatchPath: string): StartSessionResult {
     const runtime = getRuntimeStatus(codeAgentBatchPath)
     if (!runtime.ready) throw new Error(runtime.message ?? 'CodeAgent 尚未就绪。')
-    if (request.skill.mode !== request.mode) throw new Error('所选 Skill 与工作模式不匹配。')
-    if (request.mode === 'REVIEW' && (!request.review?.requirement.trim() || !request.review.commitId.trim())) {
-      throw new Error('REVIEW 需要原始需求和 Target Commit。')
-    }
-
+    if ((request.skill.mode ?? 'CUSTOM') !== request.mode) throw new Error('所选 Skill 与工作模式不匹配。')
     const normalizedRoot = path.resolve(request.projectRoot)
     if (request.mode === 'QA') {
       const existing = [...this.sessions.values()].find(
@@ -61,7 +57,7 @@ export class SessionManager extends EventEmitter {
       skill: request.skill,
       state: 'running',
       startedAt: new Date().toISOString(),
-      title: `${request.mode} · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`
+      title: `${request.skill.name} · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`
     }
     const managed: ManagedSession = { summary, pty: process, history: '' }
     this.sessions.set(id, managed)
@@ -78,9 +74,6 @@ export class SessionManager extends EventEmitter {
 
     const skillInstruction = `/${request.skill.name}`
     process.write(`${skillInstruction}${os.EOL}`)
-    if (request.mode === 'REVIEW' && request.review) {
-      process.write(`Requirement:${os.EOL}${request.review.requirement}${os.EOL}${os.EOL}Target Commit:${os.EOL}${request.review.commitId}${os.EOL}`)
-    }
 
     return { session: summary, history: managed.history, reused: false }
   }

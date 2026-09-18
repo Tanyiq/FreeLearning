@@ -89,7 +89,7 @@ function registerIpc(): void {
     const skill = project.skills.find(
       (candidate) => candidate.name === request.skill.name && candidate.relativePath === request.skill.relativePath
     )
-    if (!skill || skill.mode !== request.mode) throw new Error('所选 Skill 不属于当前 Project 或与工作模式不匹配。')
+    if (!skill || (skill.mode ?? 'CUSTOM') !== request.mode) throw new Error('所选 Skill 不属于当前 Project 或与工作模式不匹配。')
     const batchPath = await runtimeSettings.getCodeAgentBatchPath()
     return sessions.start({ ...request, projectRoot: project.root, skill }, batchPath)
   })
