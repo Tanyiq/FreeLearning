@@ -44,7 +44,8 @@ export class SessionManager extends EventEmitter {
     }
 
     const id = randomUUID()
-    const process = pty.spawn('cmd.exe', ['/d', '/q', '/s', '/c', `"${runtime.batchPath}"`], {
+    const commandLine = `/d /q /s /c ""${runtime.batchPath}""`
+    const process = pty.spawn('cmd.exe', commandLine, {
       name: 'xterm-256color',
       cols: 120,
       rows: 32,

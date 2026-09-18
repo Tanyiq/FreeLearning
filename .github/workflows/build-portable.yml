@@ -35,6 +35,9 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Verify BAT paths with spaces
+        run: pnpm run test:pty-path
+
       - name: Build portable EXE
         run: pnpm run package:portable
 

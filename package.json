@@ -11,6 +11,7 @@
     "build": "tsc --noEmit && electron-vite build",
     "preview": "electron-vite preview",
     "test": "vitest run",
+    "test:pty-path": "node scripts/pty-path-smoke.mjs \"test-fixtures/CodeAgent With Spaces/test-agent.bat\"",
     "test:watch": "vitest",
     "package": "npm run package:portable",
     "package:portable": "tsc --noEmit && electron-vite build && electron-builder --win portable --x64",
