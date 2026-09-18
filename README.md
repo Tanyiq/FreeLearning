@@ -70,6 +70,8 @@ Workbench 顶部支持添加、切换和移除多个 Domain Project。注册信�
 
 CodeAgent 始终以 Project 根目录作为 `cwd`，并仅通过 `D:\\codeagentCli\\codeagent.bat` 启动。
 
+启动 Session 后，Workbench 通过 `/<skill-name>` 形式激活 Skill，例如 `/topo-qa`；不会将 `SKILL.md` 内容拼接到 Prompt。
+
 ## Session 规则
 
 - QA：同一 Project 下复用运行中的 QA Session。

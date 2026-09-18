@@ -76,7 +76,7 @@ export class SessionManager extends EventEmitter {
       this.emit('exit', { sessionId: id, exitCode } satisfies SessionExitEvent)
     })
 
-    const skillInstruction = `使用 ${request.skill.relativePath} 处理接下来的问题。`
+    const skillInstruction = `/${request.skill.name}`
     process.write(`${skillInstruction}${os.EOL}`)
     if (request.mode === 'REVIEW' && request.review) {
       process.write(`Requirement:${os.EOL}${request.review.requirement}${os.EOL}${os.EOL}Target Commit:${os.EOL}${request.review.commitId}${os.EOL}`)
