@@ -1,0 +1,19 @@
+export const IPC = {
+  chooseProject: 'project:choose',
+  loadProject: 'project:load',
+  listProjects: 'project:list',
+  removeProject: 'project:remove',
+  recentProject: 'project:recent',
+  gitStatus: 'git:status',
+  runtimeStatus: 'runtime:status',
+  chooseCodeAgentBatch: 'runtime:choose-batch',
+  resetCodeAgentBatch: 'runtime:reset-batch',
+  startSession: 'session:start',
+  sendSession: 'session:send',
+  resizeSession: 'session:resize',
+  stopSession: 'session:stop',
+  listSessions: 'session:list',
+  sessionHistory: 'session:history',
+  sessionOutput: 'session:output',
+  sessionExit: 'session:exit'
+} as const

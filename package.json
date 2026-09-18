@@ -1,0 +1,69 @@
+{
+  "name": "domain-agent-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Windows GUI workflow launcher for local CodeAgent domain projects",
+  "main": "out/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "tsc --noEmit && electron-vite build",
+    "preview": "electron-vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package": "npm run package:portable",
+    "package:portable": "npm run build && electron-builder --win portable --x64",
+    "package:installer": "npm run build && electron-builder --win nsis --x64"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0"
+  },
+  "devDependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.12",
+    "electron-vite": "^3.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.0"
+  },
+  "build": {
+    "appId": "local.domain-agent.workbench",
+    "productName": "Domain Agent Workbench",
+    "npmRebuild": false,
+    "electronDist": "node_modules/electron/dist",
+    "electronLanguages": [
+      "en-US",
+      "zh-CN"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "out/**/*",
+      "node_modules/**/*",
+      "!node_modules/node-pty/prebuilds/win32-arm64/**/*",
+      "!node_modules/node-pty/third_party/**/*",
+      "!node_modules/node-pty/src/**/*",
+      "!node_modules/node-pty/scripts/**/*",
+      "!node_modules/node-pty/deps/**/*",
+      "!node_modules/node-pty/**/*.map",
+      "!node_modules/node-pty/**/*.test.js",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/node-pty/prebuilds/win32-x64/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "artifactName": "Domain-Agent-Workbench-${version}-${arch}.${ext}"
+    }
+  }
+}
