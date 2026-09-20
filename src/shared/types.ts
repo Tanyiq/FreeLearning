@@ -23,6 +23,11 @@ export interface RegisteredProject {
   error?: string
 }
 
+export interface CreateProjectRequest {
+  baseDirectory: string
+  name: string
+}
+
 export interface GitStatus {
   available: boolean
   isRepository: boolean
@@ -79,6 +84,8 @@ export interface SessionExitEvent {
 
 export interface WorkbenchApi {
   chooseProject(): Promise<ProjectInfo | null>
+  chooseProjectBaseDirectory(): Promise<string | null>
+  createProject(request: CreateProjectRequest): Promise<ProjectInfo>
   loadProject(root: string): Promise<ProjectInfo>
   listProjects(): Promise<RegisteredProject[]>
   removeProject(root: string): Promise<RegisteredProject[]>
@@ -91,6 +98,7 @@ export interface WorkbenchApi {
   send(sessionId: string, text: string): Promise<void>
   resize(sessionId: string, cols: number, rows: number): Promise<void>
   stopSession(sessionId: string): Promise<void>
+  deleteSession(sessionId: string): Promise<void>
   listSessions(projectRoot: string): Promise<SessionSummary[]>
   getSessionHistory(sessionId: string): Promise<string>
   onSessionOutput(callback: (event: SessionOutputEvent) => void): () => void

@@ -4,6 +4,8 @@ import type { SessionExitEvent, SessionOutputEvent, StartSessionRequest, Workben
 
 const api: WorkbenchApi = {
   chooseProject: () => ipcRenderer.invoke(IPC.chooseProject),
+  chooseProjectBaseDirectory: () => ipcRenderer.invoke(IPC.chooseProjectBaseDirectory),
+  createProject: (request) => ipcRenderer.invoke(IPC.createProject, request),
   loadProject: (root) => ipcRenderer.invoke(IPC.loadProject, root),
   listProjects: () => ipcRenderer.invoke(IPC.listProjects),
   removeProject: (root) => ipcRenderer.invoke(IPC.removeProject, root),
@@ -16,6 +18,7 @@ const api: WorkbenchApi = {
   send: (id, text) => ipcRenderer.invoke(IPC.sendSession, id, text),
   resize: (id, cols, rows) => ipcRenderer.invoke(IPC.resizeSession, id, cols, rows),
   stopSession: (id) => ipcRenderer.invoke(IPC.stopSession, id),
+  deleteSession: (id) => ipcRenderer.invoke(IPC.deleteSession, id),
   listSessions: (root) => ipcRenderer.invoke(IPC.listSessions, root),
   getSessionHistory: (id) => ipcRenderer.invoke(IPC.sessionHistory, id),
   onSessionOutput: (callback) => {

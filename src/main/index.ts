@@ -1,9 +1,9 @@
 import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import path from 'node:path'
 import { IPC } from '../shared/channels'
-import type { StartSessionRequest } from '../shared/types'
+import type { CreateProjectRequest, StartSessionRequest } from '../shared/types'
 import { readGitStatus } from './git-service'
-import { inspectProject } from './project-service'
+import { createDomainProject, inspectProject } from './project-service'
 import { ProjectRegistry } from './project-registry'
 import { getRuntimeStatus } from './runtime-service'
 import { RuntimeSettings } from './runtime-settings'
@@ -48,6 +48,21 @@ function registerIpc(): void {
       : await dialog.showOpenDialog(options)
     if (result.canceled || !result.filePaths[0]) return null
     const project = await inspectProject(result.filePaths[0])
+    await projects.add(project.root)
+    return project
+  })
+  ipcMain.handle(IPC.chooseProjectBaseDirectory, async () => {
+    const options: Electron.OpenDialogOptions = {
+      title: '选择新项目的 Base 目录',
+      properties: ['openDirectory', 'createDirectory']
+    }
+    const result = mainWindow
+      ? await dialog.showOpenDialog(mainWindow, options)
+      : await dialog.showOpenDialog(options)
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
+  ipcMain.handle(IPC.createProject, async (_event, request: CreateProjectRequest) => {
+    const project = await createDomainProject(request.baseDirectory, request.name)
     await projects.add(project.root)
     return project
   })
@@ -96,6 +111,7 @@ function registerIpc(): void {
   ipcMain.handle(IPC.sendSession, (_event, id: string, text: string) => sessions.send(id, text))
   ipcMain.handle(IPC.resizeSession, (_event, id: string, cols: number, rows: number) => sessions.resize(id, cols, rows))
   ipcMain.handle(IPC.stopSession, (_event, id: string) => sessions.stop(id))
+  ipcMain.handle(IPC.deleteSession, (_event, id: string) => sessions.delete(id))
   ipcMain.handle(IPC.listSessions, (_event, root: string) => sessions.list(root))
   ipcMain.handle(IPC.sessionHistory, (_event, id: string) => sessions.history(id))
 

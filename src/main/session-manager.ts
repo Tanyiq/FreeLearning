@@ -96,6 +96,16 @@ export class SessionManager extends EventEmitter {
     session.pty.kill()
   }
 
+  delete(sessionId: string): void {
+    const session = this.sessions.get(sessionId)
+    if (!session) return
+    this.sessions.delete(sessionId)
+    if (session.summary.state === 'running') {
+      session.summary.state = 'stopped'
+      session.pty.kill()
+    }
+  }
+
   stopProject(projectRoot: string): void {
     const normalizedRoot = path.resolve(projectRoot).toLowerCase()
     for (const session of this.sessions.values()) {

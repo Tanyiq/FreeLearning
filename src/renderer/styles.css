@@ -102,10 +102,18 @@ button { color: inherit; }
 .session-heading { margin: 27px 10px 9px; display: flex; align-items: center; justify-content: space-between; }
 .session-heading > span:last-child, .count-badge { color: #81909e; font-family: Consolas, monospace; font-size: 11px; }
 .session-list { max-height: 300px; overflow-y: auto; }
-.session-item { padding: 8px 10px; min-width: 0; }
+.session-row { position: relative; min-width: 0; }
+.session-item { padding: 8px 34px 8px 10px; min-width: 0; }
 .session-item > span:last-child { min-width: 0; }
 .session-item strong { white-space: nowrap; }
 .session-item small { white-space: nowrap; max-width: 140px; }
+.session-delete {
+  position: absolute; top: 50%; right: 6px; width: 24px; height: 24px; transform: translateY(-50%);
+  border: 0; border-radius: 6px; background: transparent; color: #667482; font-size: 17px; line-height: 1;
+  cursor: pointer; opacity: .35; transition: .15s ease;
+}
+.session-row:hover .session-delete, .session-delete:focus-visible { opacity: 1; }
+.session-delete:hover { color: #ff929d; background: rgba(239, 123, 135, .11); }
 .status-dot { flex: 0 0 auto; width: 7px; height: 7px; border-radius: 50%; background: #687582; }
 .status-dot.running { background: #52dba8; box-shadow: 0 0 8px rgba(82, 219, 168, .6); }
 .status-dot.failed { background: #ef7b87; }
@@ -180,6 +188,13 @@ button { color: inherit; }
 .runtime-message { margin: 12px 1px 0; color: #d0ad69; font-size: 11px; line-height: 1.5; }
 .dialog-actions.spread { justify-content: space-between; align-items: center; }
 .dialog-actions.spread > div { display: flex; gap: 8px; }
+.create-project-dialog { width: min(620px, calc(100vw - 48px)); }
+.create-path-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-top: 7px; }
+.dialog .create-path-row input { margin-top: 0; }
+.project-structure-preview { margin-top: 16px; padding: 12px 13px; border: 1px solid #303943; border-radius: 8px; background: #0f141a; }
+.project-structure-preview > span, .project-structure-preview code, .project-structure-preview small { display: block; }
+.project-structure-preview code { margin-top: 7px; color: #c6d0da; font-size: 12px; overflow-wrap: anywhere; }
+.project-structure-preview small { margin-top: 7px; color: #68cfa8; font: 11px Consolas, monospace; }
 
 @media (max-height: 710px) {
   .topbar { min-height: 64px; padding-block: 9px; }

@@ -59,6 +59,17 @@ npm run package:installer
 
 Workbench 顶部支持添加、切换和移除多个 Domain Project。注册信息保存在当前 Windows 用户的 Electron `userData` 目录中；只保存路径，不复制或删除 Project、Knowledge、Sources、Repo 等内容。移除后随时可以重新添加。
 
+也可以通过 `+ New Project` 选择 Base 目录并输入项目名。Workbench 会创建项目根目录及以下初始结构，并自动添加、切换到新项目：
+
+```text
+project/
+└── .cac/
+    ├── skills/
+    └── settings.json
+```
+
+新建的 `.cac/settings.json` 默认启用 `permissions.defaultMode = "bypassPermissions"`。Workbench 不会覆盖已有同名目录。
+
 ## Project 约定
 
 选择的根目录必须包含 `.cac/skills/`。Workbench 扫描 `.cac/skills/*/SKILL.md`，并按目录名后缀识别：
@@ -80,4 +91,6 @@ CodeAgent 始终以 Project 根目录作为 `cwd`，并仅通过 `D:\\codeagentC
 - DEV：每次启动新 Session。
 - REVIEW：每次启动新的独立 Session；后续需求和 commit 等信息由用户直接在 CodeAgent 终端中交互输入。
 - REFRESH：每次启动新 Session。
+
+左侧 Session 条目右侧可删除。删除正在运行的 Session 时，Workbench 会先请求确认并停止对应 CodeAgent 进程；该操作只清理当前应用内的 Session 与终端历史，不会删除项目文件。
 # FreeLearning

@@ -1,5 +1,7 @@
 export const IPC = {
   chooseProject: 'project:choose',
+  chooseProjectBaseDirectory: 'project:choose-base-directory',
+  createProject: 'project:create',
   loadProject: 'project:load',
   listProjects: 'project:list',
   removeProject: 'project:remove',
@@ -12,6 +14,7 @@ export const IPC = {
   sendSession: 'session:send',
   resizeSession: 'session:resize',
   stopSession: 'session:stop',
+  deleteSession: 'session:delete',
   listSessions: 'session:list',
   sessionHistory: 'session:history',
   sessionOutput: 'session:output',

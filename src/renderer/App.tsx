@@ -24,6 +24,10 @@ export default function App() {
   const [busy, setBusy] = useState(false)
   const [showProjects, setShowProjects] = useState(false)
   const [showRuntime, setShowRuntime] = useState(false)
+  const [showCreateProject, setShowCreateProject] = useState(false)
+  const [projectBaseDirectory, setProjectBaseDirectory] = useState('')
+  const [projectName, setProjectName] = useState('')
+  const [creatingProject, setCreatingProject] = useState(false)
   const { containerRef } = useTerminal({ sessionId: activeSession?.id ?? null, history: terminalHistory })
 
   const selectedSkill = project?.skills.find((skill) => skill.name === selectedSkillName)
@@ -85,6 +89,45 @@ export default function App() {
       }
     } catch (reason) {
       setError(errorMessage(reason))
+    }
+  }
+
+  const chooseProjectBaseDirectory = async (): Promise<void> => {
+    try {
+      const selected = await window.workbench.chooseProjectBaseDirectory()
+      if (selected) setProjectBaseDirectory(selected)
+    } catch (reason) {
+      setError(errorMessage(reason))
+    }
+  }
+
+  const closeCreateProject = (): void => {
+    if (creatingProject) return
+    setShowCreateProject(false)
+    setProjectBaseDirectory('')
+    setProjectName('')
+  }
+
+  const createProject = async (): Promise<void> => {
+    if (!projectBaseDirectory.trim() || !projectName.trim()) return
+    setCreatingProject(true)
+    setError(null)
+    try {
+      const next = await window.workbench.createProject({
+        baseDirectory: projectBaseDirectory,
+        name: projectName
+      })
+      await refreshProjects()
+      await acceptProject(next)
+      setError(null)
+      setShowCreateProject(false)
+      setProjectBaseDirectory('')
+      setProjectName('')
+      setShowProjects(false)
+    } catch (reason) {
+      setError(errorMessage(reason))
+    } finally {
+      setCreatingProject(false)
     }
   }
 
@@ -176,6 +219,23 @@ export default function App() {
     setTerminalHistory(history)
   }
 
+  const deleteSession = async (session: SessionSummary): Promise<void> => {
+    if (session.state === 'running') {
+      const shouldDelete = window.confirm(`“${session.title}”仍在运行。\n\n删除会先停止 CodeAgent 进程，是否继续？`)
+      if (!shouldDelete) return
+    }
+    try {
+      await window.workbench.deleteSession(session.id)
+      if (activeSession?.id === session.id) {
+        setActiveSession(null)
+        setTerminalHistory('')
+      }
+      if (project) await refreshSessions(project.root)
+    } catch (reason) {
+      setError(errorMessage(reason))
+    }
+  }
+
   const send = async (): Promise<void> => {
     if (!activeSession || !input.trim() || !activeRunning) return
     const message = input
@@ -218,7 +278,8 @@ export default function App() {
               ))}
             </select>
           </div>
-          <button className="button secondary add-project" onClick={() => void chooseProject()}>+ Add Project</button>
+          <button className="button secondary add-project" onClick={() => setShowCreateProject(true)}>+ New Project</button>
+          <button className="button secondary add-project" onClick={() => void chooseProject()}>Add Existing</button>
           <button className="button subtle-danger" disabled={!registeredProjects.length} onClick={() => setShowProjects(true)}>Manage</button>
           <button className="button runtime-button" onClick={() => setShowRuntime(true)}>Runtime</button>
         </div>
@@ -251,10 +312,18 @@ export default function App() {
           <div className="session-list">
             {sessions.length === 0 && <p className="empty-copy">还没有 Session</p>}
             {sessions.map((session) => (
-              <button key={session.id} className={`session-item ${activeSession?.id === session.id ? 'active' : ''}`} onClick={() => void switchSession(session)}>
-                <span className={`status-dot ${session.state}`} />
-                <span><strong>{session.title}</strong><small>{session.skill.name}</small></span>
-              </button>
+              <div className="session-row" key={session.id}>
+                <button className={`session-item ${activeSession?.id === session.id ? 'active' : ''}`} onClick={() => void switchSession(session)}>
+                  <span className={`status-dot ${session.state}`} />
+                  <span><strong>{session.title}</strong><small>{session.skill.name}</small></span>
+                </button>
+                <button
+                  className="session-delete"
+                  aria-label={`删除 Session ${session.title}`}
+                  title="删除 Session"
+                  onClick={() => void deleteSession(session)}
+                >×</button>
+              </div>
             ))}
           </div>
         </aside>
@@ -336,8 +405,47 @@ export default function App() {
               ))}
             </div>
             <div className="dialog-actions">
-              <button className="button secondary" onClick={() => void chooseProject()}>+ Add Project</button>
+              <button className="button secondary" onClick={() => setShowCreateProject(true)}>+ New Project</button>
+              <button className="button secondary" onClick={() => void chooseProject()}>Add Existing</button>
               <button className="button primary" onClick={() => setShowProjects(false)}>Done</button>
+            </div>
+          </section>
+        </div>
+      )}
+      {showCreateProject && (
+        <div className="dialog-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeCreateProject()}>
+          <section className="dialog create-project-dialog" role="dialog" aria-modal="true" aria-labelledby="create-project-title">
+            <div className="dialog-heading">
+              <div><span className="eyebrow">NEW DOMAIN PROJECT</span><h2 id="create-project-title">Create Project</h2></div>
+              <button className="icon-button" disabled={creatingProject} onClick={closeCreateProject} aria-label="关闭">×</button>
+            </div>
+            <label htmlFor="project-base-directory">Base directory</label>
+            <div className="create-path-row">
+              <input id="project-base-directory" value={projectBaseDirectory} readOnly placeholder="选择用于存放项目的父目录" />
+              <button className="button secondary" disabled={creatingProject} onClick={() => void chooseProjectBaseDirectory()}>Browse…</button>
+            </div>
+            <label htmlFor="project-name">Project name</label>
+            <input
+              id="project-name"
+              value={projectName}
+              disabled={creatingProject}
+              autoFocus
+              placeholder="例如 topo"
+              onChange={(event) => setProjectName(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && projectBaseDirectory.trim() && projectName.trim()) void createProject()
+              }}
+            />
+            <div className="project-structure-preview">
+              <span className="section-label">WILL CREATE</span>
+              <code>{projectBaseDirectory && projectName.trim() ? `${projectBaseDirectory}\\${projectName.trim()}` : '选择 Base 目录并输入项目名'}</code>
+              <small>.cac/skills/ · .cac/settings.json</small>
+            </div>
+            <div className="dialog-actions">
+              <button className="button secondary" disabled={creatingProject} onClick={closeCreateProject}>Cancel</button>
+              <button className="button primary" disabled={creatingProject || !projectBaseDirectory.trim() || !projectName.trim()} onClick={() => void createProject()}>
+                {creatingProject ? 'Creating…' : 'Create Project'}
+              </button>
             </div>
           </section>
         </div>
